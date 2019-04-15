@@ -2,16 +2,18 @@ import json
 
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 
-from bot.app import create_app
 from bot.extensions import db
+from bot.handlers.core import add_handler, list_routes, Route, route_to_help
 from bot.models import Document
 from bot.models.bot import BotResponse
+from bot.models.user import Role
+from bot.services.decorators import push_app_context
 
 
-def list_docs():
-    app = create_app()
-    app.app_context().push()
-
+@push_app_context
+def list_docs() -> BotResponse:
+    """ list documents
+    """
     docs = Document.get_all()
     keyboard = InlineKeyboardMarkup()
 
@@ -24,10 +26,17 @@ def list_docs():
 
 
 def help_docs() -> BotResponse:
-    return BotResponse('help docs')
+    """ this help
+    """
+    routes = list_routes(Role.ADMIN, "/docs")  # TODO: fix role
+    help_list = [route_to_help(r) for r in routes if r.handler.__doc__]
+
+    return BotResponse("\n".join(help_list))
 
 
 def new_doc_help() -> BotResponse:
+    """ create new document
+    """
     content = '''Enter new document in json format:
     {
         "type": "document",
@@ -40,24 +49,14 @@ def new_doc_help() -> BotResponse:
     return BotResponse(content)
 
 
-def edit_doc(message) -> BotResponse:
-    """edit document
+def edit_doc() -> BotResponse:
+    """edit document TODO
     """
     return BotResponse('edit')
 
 
-docs_handler_map = {
-    'edit': edit_doc,
-    'new': new_doc_help,
-    'help': list_docs,
-    'list': list_docs,
-}
-
-
+@push_app_context
 def new_doc_form(message: Message) -> BotResponse:
-    app = create_app()
-    app.app_context().push()
-
     data = json.loads(message.text)
     required_keys = ('title', 'content')
 
@@ -76,6 +75,8 @@ def new_doc_form(message: Message) -> BotResponse:
     return BotResponse('OK')
 
 
-docs_state_map = {
-    'docs.new': new_doc_form,
-}
+add_handler('/docs help', help_docs, Role.USER)
+add_handler('/docs list', list_docs, Role.USER)
+add_handler('/docs new', new_doc_help, Role.ADMIN)
+add_handler('last:/docs new', new_doc_help, Role.ADMIN, False)
+add_handler('/docs edit', edit_doc, Role.ADMIN)

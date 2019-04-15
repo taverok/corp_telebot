@@ -6,9 +6,9 @@ from bot.extensions import db
 
 
 class Role(Enum):
-    SUPERADMIN = 1
-    ADMIN = 2
-    USER = 10
+    USER = 1
+    ADMIN = 100
+    SUPERADMIN = 1000
 
 
 class User(db.Model):
@@ -24,8 +24,6 @@ class User(db.Model):
     def __repr__(self) -> str:
         return json.dumps(dict(self))
 
-    @classmethod
-    def find_by_id(cls, _id: int) -> Optional['User']:
-        return cls.query.filter_by(id=_id).first()
 
-
+def find_by_id(_id: int) -> Optional['User']:
+    return User.query.filter_by(telegram_id=_id).first()
