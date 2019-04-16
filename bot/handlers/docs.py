@@ -1,4 +1,5 @@
 import json
+from typing import List
 
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 
@@ -10,19 +11,23 @@ from bot.models.user import Role, User
 from bot.services.decorators import push_app_context
 
 
-@push_app_context
-def list_docs(message: Message, user: User, *args, **kwargs) -> BotResponse:
-    """ list documents
-    """
-    docs = Document.find_all_by_parent_id()
+def _get_docs_list_response(subdocs: List[Document], text="Content", no_subdocs_text="No content") -> BotResponse:
+    text = text if subdocs else no_subdocs_text
     keyboard = InlineKeyboardMarkup()
 
-    for doc in docs:
+    for doc in subdocs:
         icon = "" if not doc.icon else doc.icon.decode()
         button = InlineKeyboardButton(text=f"{icon} {doc.title}", callback_data=f"{doc.id}")
         keyboard.add(button)
 
-    return BotResponse("Список документов", reply_markup=keyboard)
+    return BotResponse(text, reply_markup=keyboard)
+
+
+@push_app_context
+def list_docs(message: Message, user: User, *args, **kwargs) -> BotResponse:
+    """ list documents
+    """
+    return _get_docs_list_response(Document.find_all_by_parent_id(parent_id=None))
 
 
 def help_docs(message: Message, user: User, *args, **kwargs) -> BotResponse:
@@ -39,14 +44,14 @@ def new_doc_help(message: Message, user: User, *args, **kwargs) -> BotResponse:
     """
     content = '''Enter new document in json format:
     {
-        "title": "my title",
-        "icon": "icon_file_id (optional)",
-        "content": "html content",
+        "title": "Document title",
+        "icon": "📃",
+        "content": "HTML content",
         "sub": [
             {
-                "title": "my sub title",
-                "icon": "icon_file_id (optional)",
-                "content": "html content"
+                "title": "Sub documents title",
+                "icon": "➡️",
+                "content": "HTML content"
             }
         ]
     }

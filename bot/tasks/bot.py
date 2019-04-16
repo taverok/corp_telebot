@@ -8,7 +8,8 @@ from telebot.types import Message, CallbackQuery
 from bot.config import BOT_TOKEN
 from bot.extensions import db
 from bot.handlers.core import get_handler
-from bot.models import Token
+from bot.handlers.docs import _get_docs_list_response
+from bot.models import Token, Document
 from bot.models.bot import BotResponse
 from bot.models.user import Role, User, find_by_id
 from bot.services.command import get_subcommand
@@ -111,5 +112,8 @@ def text_message_dispatcher(message: Message, user: User):
 @bot.callback_query_handler(func=lambda c: True)
 @push_app_context
 def docs_callback_dispatcher(c: CallbackQuery):
-    bot.send_message(c.message.chat.id, jsonpickle.encode(c))
+    doc = Document.find_by_id(int(c.data))
+    response = _get_docs_list_response(doc.sub_documents, text=doc.content, no_subdocs_text=doc.content)
+
+    bot.send_message(c.message.chat.id, response.content, reply_markup=response.reply_markup, parse_mode="HTML")
 

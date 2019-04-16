@@ -28,12 +28,20 @@ class Document(db.Model):
         return json.dumps(dict(self))
 
     @classmethod
-    def find_all_by_parent_id(cls, parent=0) -> List['Document']:
+    def find_all_by_parent_id(cls, parent_id=None) -> List['Document']:
         return (cls.query
-                .filter_by(parent_id=parent)
+                .filter_by(parent_id=parent_id)
                 .order_by(asc(Document.order_id))
                 .order_by(asc(Document.created_at))
                 .all())
+
+    @classmethod
+    def find_by_id(cls, _id=None) -> 'Document':
+        return (cls.query
+                .filter_by(id=_id)
+                .order_by(asc(Document.order_id))
+                .order_by(asc(Document.created_at))
+                .first())
 
     @classmethod
     def from_json(cls, data: Union[dict, list], from_user_id: int) -> List['Document']:
