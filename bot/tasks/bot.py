@@ -7,10 +7,9 @@ from telebot.types import Message, CallbackQuery
 
 from bot.config import BOT_TOKEN
 from bot.extensions import db
-from bot.handlers.core import get_handler
+from bot.handlers.core import get_handler, list_routes, route_to_help
 from bot.handlers.docs import _get_docs_list_response
 from bot.models import Token, Document
-from bot.models.bot import BotResponse
 from bot.models.user import Role, User, find_by_id
 from bot.services.command import get_subcommand
 from bot.services.decorators import push_app_context, with_user
@@ -26,6 +25,36 @@ stateMachine = StateMachine()
 def start_bot():
     with app.app_context():
         bot.polling(none_stop=True)
+
+
+@bot.message_handler(commands=['help'])
+@bot.edited_message_handler(commands=['help'])
+@with_user
+def help_command(message: Message, user: User):
+    if not user:
+        bot.send_message(message.chat.id, "Account needs activation")
+        return
+
+    routes = []
+    routes.extend(list_routes(user.role, "/docs"))
+    routes.extend(list_routes(user.role, "/user"))
+    help_list = [route_to_help(r) for r in routes if r.handler.__doc__]
+
+    if not user.is_active:
+        help_list.insert(0, '/activate YOUR_TOKEN')
+
+    bot.send_message(message.chat.id, "\n".join(help_list))
+
+
+@bot.message_handler(commands=['start'])
+@bot.edited_message_handler(commands=['start'])
+def help_command(message: Message):
+    text = '''Welcome to documentation bot. Here you will find useful information about the company. \
+But firstly you should activate your account with the command /activate YOUR_TOKEN.
+
+/help for more information'''
+
+    bot.send_message(message.chat.id, text)
 
 
 @bot.message_handler(commands=['docs'])
@@ -100,13 +129,11 @@ def text_message_dispatcher(message: Message, user: User):
     user_state = stateMachine.get_state(message.from_user.id)
     handler = get_handler(user_state, user.role)
 
-    if not handler:
-        return BotResponse(f"no handler found: user state {user_state}")
-
     response = handler(message, user)
-    bot.send_message(message.chat.id, response.content)
+    bot.send_message(message.chat.id, '\n'.join([response.content, response.errors]))
 
-    stateMachine.remove_state(message.from_user.id)
+    if not response.errors:
+        stateMachine.remove_state(message.from_user.id)
 
 
 @bot.callback_query_handler(func=lambda c: True)

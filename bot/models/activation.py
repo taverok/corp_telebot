@@ -20,7 +20,7 @@ class Token(db.Model):
 
     @classmethod
     def get_current(cls) -> 'Token':
-        return cls.query.one()
+        return cls.query.first()
 
 
 def generate() -> str:

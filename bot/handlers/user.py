@@ -11,9 +11,9 @@ PREFIX = "/user"
 
 
 def help_users(message: Message, user: User, *args, **kwargs) -> BotResponse:
-    """ this help
+    """ help for user resource
     """
-    routes = list_routes(Role.ADMIN, PREFIX)
+    routes = list_routes(user.role, PREFIX)
     help_list = [route_to_help(r) for r in routes if r.handler.__doc__]
 
     return BotResponse("\n".join(help_list))
@@ -27,11 +27,11 @@ def list_users(message: Message, user: User, *args, **kwargs) -> BotResponse:
 
 @push_app_context
 def flush_activation(message: Message, user: User, *args, **kwargs) -> BotResponse:
-    """ [id|-1] deactivates user with passed id or all if -1.
+    """ deactivates user with passed id or all if -1.
     """
     tokens = message.text.split(" ")
     if len(tokens) < 3:
-        return BotResponse("pass user id (or -1 for all)")
+        return BotResponse("pass in arguments user_id (or -1 for all)")
 
     _id = int(tokens[2])
     query = User.query.filter_by(role=Role.USER)
@@ -63,7 +63,7 @@ def show_token(message: Message, user: User, *args, **kwargs):
     """
     token = Token.get_current()
 
-    return BotResponse(f"{token.code}")
+    return BotResponse(token.code if token else "No token found, you should generate it")
 
 
 add_handler(PREFIX + ' help', help_users, Role.USER)

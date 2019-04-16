@@ -24,7 +24,7 @@ def get_handler(name: str, role: Role) -> Callable:
 
     if not route or role.value < route.role.value:
         def empty_handler(*args, **kwargs):
-            return BotResponse('404 no route')
+            return BotResponse('/help', errors='Command not found')
         return empty_handler
 
     return route.handler

@@ -4,7 +4,7 @@ from typing import List
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 
 from bot.extensions import db
-from bot.handlers.core import add_handler, list_routes, Route, route_to_help
+from bot.handlers.core import add_handler, list_routes, route_to_help
 from bot.models import Document
 from bot.models.bot import BotResponse
 from bot.models.user import Role, User
@@ -31,9 +31,9 @@ def list_docs(message: Message, user: User, *args, **kwargs) -> BotResponse:
 
 
 def help_docs(message: Message, user: User, *args, **kwargs) -> BotResponse:
-    """ this help
+    """ help for document resource
     """
-    routes = list_routes(Role.ADMIN, "/docs")  # TODO: fix role
+    routes = list_routes(user.role, "/docs")
     help_list = [route_to_help(r) for r in routes if r.handler.__doc__]
 
     return BotResponse("\n".join(help_list))
