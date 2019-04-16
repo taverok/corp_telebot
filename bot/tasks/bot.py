@@ -1,9 +1,8 @@
 import click
 import telebot
-import jsonpickle
 from flask.cli import with_appcontext
 from flask import current_app as app
-from telebot.types import Message, CallbackQuery
+from telebot.types import Message, CallbackQuery, ReplyKeyboardMarkup, KeyboardButton
 
 from bot.config import BOT_TOKEN
 from bot.extensions import db
@@ -88,7 +87,8 @@ def activate(message: Message):
     user = find_by_id(message.from_user.id) or User(telegram_id=message.from_user.id,
                                                     name=message.from_user.first_name,
                                                     surname=message.from_user.last_name,
-                                                    role=Role.USER
+                                                    role=Role.USER,
+                                                    username=message.from_user.username
                                                     )
     if user.is_active:
         bot.send_message(message.chat.id, "Already activated")
@@ -98,7 +98,11 @@ def activate(message: Message):
     db.session.add(user)
     db.session.commit()
 
-    bot.send_message(message.chat.id, "Successfully activated")
+    keyboard = ReplyKeyboardMarkup(one_time_keyboard=True)
+    reg_button = KeyboardButton(text="Share your phone number", request_contact=True)
+    keyboard.add(reg_button)
+
+    bot.send_message(message.chat.id, "Successfully activated", reply_markup=keyboard)
 
 
 @bot.message_handler(commands=['user'])
@@ -134,6 +138,18 @@ def text_message_dispatcher(message: Message, user: User):
 
     if not response.errors:
         stateMachine.remove_state(message.from_user.id)
+
+
+@bot.message_handler(content_types=['contact'])
+@with_user
+@push_app_context
+def contact_handler(message: Message, user: User):
+    if not user:
+        bot.send_message(message.chat.id, "Account needs activation")
+        return
+
+    user.phone = message.contact.phone_number
+    db.session.commit()
 
 
 @bot.callback_query_handler(func=lambda c: True)

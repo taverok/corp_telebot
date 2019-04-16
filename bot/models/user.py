@@ -19,8 +19,11 @@ class User(db.Model):
     surname = db.Column(db.String(255))
     is_active = db.Column(db.Boolean, default=False)
     role = db.Column(db.Enum(Role))
+    username = db.Column(db.String(255))
+    phone = db.Column(db.String(255))
 
-    def __repr__(self) -> str:
+
+def __repr__(self) -> str:
         return json.dumps(dict(self))
 
 

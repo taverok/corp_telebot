@@ -1,7 +1,7 @@
 from telebot.types import Message
 
 from bot.extensions import db
-from bot.handlers.core import add_handler, list_routes, Route, route_to_help
+from bot.handlers.core import add_handler, list_routes, route_to_help
 from bot.models import Token
 from bot.models.bot import BotResponse
 from bot.models.user import Role, User
@@ -22,7 +22,9 @@ def help_users(message: Message, user: User, *args, **kwargs) -> BotResponse:
 def list_users(message: Message, user: User, *args, **kwargs) -> BotResponse:
     """ list all active users
     """
-    return BotResponse("Not yet implemented")
+    users = User.query.filter_by(is_active=True).all()
+    response_list = [f'{u.telegram_id} @{u.username} ({u.name} {u.surname}) {u.phone}' for u in users]
+    return BotResponse('\n'.join(response_list))
 
 
 @push_app_context
