@@ -17,6 +17,8 @@ def push_app_context(func):
 
 
 def with_user(func):
+    """ passes User to function params
+    """
     @wraps(func)
     def wrapped(message: Message):
         app = create_app()

@@ -23,7 +23,7 @@ def get_handler(name: str, role: Role):
     route: Route = routes.get(name)
 
     if not route or role.value < route.role.value:
-        def empty_handler():
+        def empty_handler(*args, **kwargs):
             return BotResponse('404 no route')
         return empty_handler
 

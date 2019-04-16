@@ -1,5 +1,4 @@
 import click
-import jsonpickle
 import telebot
 from flask.cli import with_appcontext
 from flask import current_app as app
@@ -8,6 +7,7 @@ from telebot.types import Message, CallbackQuery
 from bot.config import BOT_TOKEN
 from bot.extensions import db
 from bot.handlers.core import get_handler
+from bot.models import Token
 from bot.models.bot import BotResponse
 from bot.models.user import Role, User, find_by_id
 from bot.services.command import get_subcommand
@@ -17,7 +17,6 @@ from bot.services.fsm import StateMachine
 
 bot: telebot.TeleBot = telebot.TeleBot(BOT_TOKEN)
 stateMachine = StateMachine()
-ACTIVATION_CODE = "aaa"
 
 
 @click.command("start_bot")
@@ -30,7 +29,7 @@ def start_bot():
 @bot.message_handler(commands=['docs'])
 @bot.edited_message_handler(commands=['docs'])
 @with_user
-def docs_dispatcher(message: Message, user: User):
+def docs_resource(message: Message, user: User):
     if not user:
         bot.send_message(message.chat.id, "Account needs activation")
         return
@@ -38,7 +37,7 @@ def docs_dispatcher(message: Message, user: User):
     subcommand = get_subcommand(message.text, default='list')
 
     handler = get_handler('/docs '+subcommand, user.role)
-    response = handler()
+    response = handler(message, user)
 
     bot.send_message(message.chat.id, response.content, reply_markup=response.reply_markup)
     stateMachine.set_state(message.from_user.id, 'last:docs/'+subcommand)
@@ -50,8 +49,9 @@ def docs_dispatcher(message: Message, user: User):
 def activate(message: Message):
     code = get_subcommand(message.text, default='')
 
-    if code != ACTIVATION_CODE:
+    if not code or code.lower() != Token.get_current().code.lower():
         bot.send_message(message.chat.id, "Wrong activation code")
+        return
 
     user = find_by_id(message.from_user.id) or User(telegram_id=message.from_user.id,
                                                     name=message.from_user.first_name,
@@ -72,7 +72,7 @@ def activate(message: Message):
 @bot.message_handler(commands=['user'])
 @bot.edited_message_handler(commands=['user'])
 @with_user
-def user_dispatcher(message: Message, user: User):
+def user_resource(message: Message, user: User):
     if not user:
         bot.send_message(message.chat.id, "Account needs activation")
         return
@@ -97,7 +97,7 @@ def text_message_dispatcher(message: Message, user: User):
     user_state = stateMachine.get_state(message.from_user.id)
     handler = get_handler(user_state, user.role)
 
-    response = handler(message) if handler else BotResponse(f"no handler found: user state {user_state}")
+    response = handler(message, user) if handler else BotResponse(f"no handler found: user state {user_state}")
 
     bot.send_message(message.chat.id, response.content)
 
