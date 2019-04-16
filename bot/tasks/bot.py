@@ -50,7 +50,7 @@ def help_command(message: Message, user: User):
 @bot.edited_message_handler(commands=['start'])
 def help_command(message: Message):
     text = '''Welcome to documentation bot. Here you will find useful information about the company. \
-But firstly you should activate your account with the command /activate YOUR_TOKEN.
+But, firstly you should activate your account with the command /activate YOUR_TOKEN.
 
 /help for more information'''
 

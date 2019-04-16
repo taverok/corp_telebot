@@ -27,25 +27,19 @@ def list_users(message: Message, user: User, *args, **kwargs) -> BotResponse:
 
 @push_app_context
 def flush_activation(message: Message, user: User, *args, **kwargs) -> BotResponse:
-    """ deactivates user with passed id or all if -1.
+    """ deactivates user with passed id
     """
     tokens = message.text.split(" ")
     if len(tokens) < 3:
         return BotResponse("pass in arguments user_id (or -1 for all)")
 
     _id = int(tokens[2])
-    query = User.query.filter_by(role=Role.USER)
-
-    if _id != -1:
-        query = query.filter_by(telegram_id=_id)
-
-    users = query.all()
-    for user in users:
-        user.is_active = False
+    user = User.query.filter_by(role=Role.USER, telegram_id=_id).first()
+    user.is_active = False
 
     db.session.commit()
 
-    return BotResponse(f"{len(users)} user deactivated")
+    return BotResponse(f"user {user.telegram_id} deactivated")
 
 
 @push_app_context
