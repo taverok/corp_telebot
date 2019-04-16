@@ -11,13 +11,16 @@ from bot.models.user import Role, User
 from bot.services.decorators import push_app_context
 
 
-def _get_docs_list_response(subdocs: List[Document], text="Content", no_subdocs_text="No content") -> BotResponse:
+def _get_docs_list_response(subdocs: List[Document], text="Content", no_subdocs_text="No content", debug=False) -> BotResponse:
     text = text if subdocs else no_subdocs_text
     keyboard = InlineKeyboardMarkup()
 
     for doc in subdocs:
         icon = "" if not doc.icon else doc.icon.decode()
-        button = InlineKeyboardButton(text=f"{icon} {doc.title}", callback_data=f"{doc.id}")
+        title = f"{icon} {doc.title}"
+        if debug:
+            title += f"{{id: {doc.id} }}"
+        button = InlineKeyboardButton(text=title, callback_data=f"{doc.id}")
         keyboard.add(button)
 
     return BotResponse(text, reply_markup=keyboard)
@@ -28,6 +31,13 @@ def list_docs(message: Message, user: User, *args, **kwargs) -> BotResponse:
     """ list documents
     """
     return _get_docs_list_response(Document.find_all_by_parent_id(parent_id=None))
+
+
+@push_app_context
+def list_debug_docs(message: Message, user: User, *args, **kwargs) -> BotResponse:
+    """ list documents
+    """
+    return _get_docs_list_response(Document.find_all_by_parent_id(parent_id=None), debug=True)
 
 
 def help_docs(message: Message, user: User, *args, **kwargs) -> BotResponse:
@@ -59,10 +69,17 @@ def new_doc_help(message: Message, user: User, *args, **kwargs) -> BotResponse:
     return BotResponse(content)
 
 
+@push_app_context
 def delete_doc(message: Message, user: User, *args, **kwargs) -> BotResponse:
-    """deletes document TODO
-    """
-    return BotResponse('edit')
+    tokens = message.text.split(" ")
+    if len(tokens) < 3:
+        return BotResponse("pass in arguments user_id (or -1 for all)")
+    _id = int(tokens[2])
+    doc = Document.find_by_id(_id)
+    doc.is_visible = False
+    db.session.commit()
+
+    return BotResponse(f'id: {_id} deleted')
 
 
 @push_app_context
@@ -82,6 +99,7 @@ def new_doc_form(message: Message, user: User, *args, **kwargs) -> BotResponse:
 
 add_handler('/docs help', help_docs, Role.USER)
 add_handler('/docs list', list_docs, Role.USER)
+add_handler('/docs list_debug', list_debug_docs, Role.ADMIN)
 add_handler('/docs new', new_doc_help, Role.ADMIN)
 add_handler('last:/docs new', new_doc_form, Role.ADMIN, False)
 add_handler('/docs delete', delete_doc, Role.ADMIN)

@@ -71,7 +71,7 @@ def docs_resource(message: Message, user: User):
     handler = get_handler(handler_key, user.role)
     response = handler(message, user)
 
-    bot.send_message(message.chat.id, response.content, reply_markup=response.reply_markup)
+    bot.send_message(message.chat.id, str(response), reply_markup=response.reply_markup)
     stateMachine.set_state(message.from_user.id, 'last:' + handler_key)
 
 
@@ -114,7 +114,7 @@ def user_resource(message: Message, user: User):
     handler = get_handler('/user '+subcommand, user.role)
     response = handler(message, user)
 
-    bot.send_message(message.chat.id, response.content, reply_markup=response.reply_markup)
+    bot.send_message(message.chat.id, str(response), reply_markup=response.reply_markup)
     stateMachine.set_state(message.from_user.id, 'last:docs/'+subcommand)
 
 
@@ -130,7 +130,7 @@ def text_message_dispatcher(message: Message, user: User):
     handler = get_handler(user_state, user.role)
 
     response = handler(message, user)
-    bot.send_message(message.chat.id, '\n'.join([response.content, response.errors]))
+    bot.send_message(message.chat.id, str(response))
 
     if not response.errors:
         stateMachine.remove_state(message.from_user.id)
@@ -142,5 +142,11 @@ def docs_callback_dispatcher(c: CallbackQuery):
     doc = Document.find_by_id(int(c.data))
     response = _get_docs_list_response(doc.sub_documents, text=doc.content, no_subdocs_text=doc.content)
 
-    bot.send_message(c.message.chat.id, response.content, reply_markup=response.reply_markup, parse_mode="HTML")
+    bot.send_message(
+        c.message.chat.id,
+        str(response),
+        reply_markup=response.reply_markup,
+        parse_mode="HTML",
+        disable_web_page_preview=True
+    )
 

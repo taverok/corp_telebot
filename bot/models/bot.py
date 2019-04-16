@@ -3,3 +3,6 @@ class BotResponse:
         self.content = content
         self.reply_markup = reply_markup
         self.errors = errors
+
+    def __str__(self):
+        return '\n'.join([self.content, self.errors])
