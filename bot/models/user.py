@@ -1,6 +1,7 @@
 import json
 from enum import Enum
 from typing import Optional
+from cachetools import cached, TTLCache
 
 from bot.extensions import db
 
@@ -23,5 +24,6 @@ class User(db.Model):
         return json.dumps(dict(self))
 
 
+@cached(cache=TTLCache(maxsize=1024, ttl=5))
 def find_by_id(_id: int) -> Optional['User']:
     return User.query.filter_by(telegram_id=_id).first()
