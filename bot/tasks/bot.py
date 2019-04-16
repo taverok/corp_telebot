@@ -1,5 +1,6 @@
 import click
 import telebot
+import jsonpickle
 from flask.cli import with_appcontext
 from flask import current_app as app
 from telebot.types import Message, CallbackQuery
@@ -36,11 +37,12 @@ def docs_resource(message: Message, user: User):
 
     subcommand = get_subcommand(message.text, default='list')
 
-    handler = get_handler('/docs '+subcommand, user.role)
+    handler_key = '/docs ' + subcommand
+    handler = get_handler(handler_key, user.role)
     response = handler(message, user)
 
     bot.send_message(message.chat.id, response.content, reply_markup=response.reply_markup)
-    stateMachine.set_state(message.from_user.id, 'last:docs/'+subcommand)
+    stateMachine.set_state(message.from_user.id, 'last:' + handler_key)
 
 
 @bot.message_handler(commands=['activate'])
@@ -97,8 +99,10 @@ def text_message_dispatcher(message: Message, user: User):
     user_state = stateMachine.get_state(message.from_user.id)
     handler = get_handler(user_state, user.role)
 
-    response = handler(message, user) if handler else BotResponse(f"no handler found: user state {user_state}")
+    if not handler:
+        return BotResponse(f"no handler found: user state {user_state}")
 
+    response = handler(message, user)
     bot.send_message(message.chat.id, response.content)
 
     stateMachine.remove_state(message.from_user.id)
@@ -107,5 +111,5 @@ def text_message_dispatcher(message: Message, user: User):
 @bot.callback_query_handler(func=lambda c: True)
 @push_app_context
 def docs_callback_dispatcher(c: CallbackQuery):
-    bot.send_message(c.message.chat.id, type(c))
+    bot.send_message(c.message.chat.id, jsonpickle.encode(c))
 

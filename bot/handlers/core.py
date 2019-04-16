@@ -5,7 +5,7 @@ from bot.models.user import Role
 
 
 class Route:
-    def __init__(self, name: str, handler: object, role: Role, is_public: bool = True):
+    def __init__(self, name: str, handler: Callable, role: Role, is_public: bool = True):
         self.name = name
         self.handler = handler
         self.role = role
@@ -19,7 +19,7 @@ def add_handler(name: str, handler: object, role: Role, is_public: bool = True):
     routes.update({name: Route(name, handler, role, is_public)})
 
 
-def get_handler(name: str, role: Role):
+def get_handler(name: str, role: Role) -> Callable:
     route: Route = routes.get(name)
 
     if not route or role.value < route.role.value:

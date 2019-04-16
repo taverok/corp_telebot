@@ -1,4 +1,3 @@
-import string
 from datetime import datetime
 from faker import Faker
 
@@ -17,7 +16,7 @@ class Token(db.Model):
         db.session.add(token)
         db.session.commit()
 
-        return token.code
+        return token
 
     @classmethod
     def get_current(cls) -> 'Token':

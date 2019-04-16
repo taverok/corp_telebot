@@ -12,8 +12,6 @@ class Role(Enum):
 
 
 class User(db.Model):
-    """Basic user model
-    """
     id = db.Column(db.Integer, primary_key=True)
     telegram_id = db.Column(db.BigInteger)
     name = db.Column(db.String(255))
