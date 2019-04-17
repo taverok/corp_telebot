@@ -53,7 +53,7 @@ def help_command(message: Message, user: User):
 
 @bot.message_handler(commands=['start'])
 @bot.edited_message_handler(commands=['start'])
-def help_command(message: Message):
+def start_command(message: Message):
     text = '''Welcome to documentation bot. Here you will find useful information about the company. \
 But, firstly you should activate your account with the command /activate YOUR_TOKEN.
 
@@ -166,7 +166,7 @@ def docs_callback_dispatcher(c: CallbackQuery):
 
     bot.send_message(
         c.message.chat.id,
-        str(response),
+        f'<b>{doc.title}</b>\n{str(response)}',
         reply_markup=response.reply_markup,
         parse_mode="HTML",
         disable_web_page_preview=True

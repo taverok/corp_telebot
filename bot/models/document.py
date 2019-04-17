@@ -55,13 +55,14 @@ class Document(db.Model):
         for doc in data:
             required_keys = ('title', 'content')
 
-            if len(doc.keys() & ('title', 'content')) < len(required_keys):
+            if len(doc.keys() & {'title', 'content'}) < len(required_keys):
                 raise ValidationException(f"All required fields must be set {required_keys}")
 
             document = Document(
                 title=doc.get('title'),
                 icon=doc.get('icon', "").encode(),
                 content=doc.get('content'),
+                parent_id=doc.get('parent_id'),
                 user_id=from_user_id
             )
 
