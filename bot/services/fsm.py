@@ -11,4 +11,4 @@ class StateMachine:
 
     @classmethod
     def remove_state(cls, user_id: int):
-        cls.states.pop(user_id)
+        cls.states.pop(user_id, None)

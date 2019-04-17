@@ -12,7 +12,7 @@ class Document(db.Model):
     __tablename__ = 'document'
 
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(255), unique=True, nullable=False)
+    title = db.Column(db.String(255), nullable=False)
     icon = db.Column(db.Binary())
     content = db.Column(db.UnicodeText(65000))
     is_private = db.Column(db.Boolean(), default=True)
@@ -21,11 +21,14 @@ class Document(db.Model):
     order_id = db.Column(db.Integer, nullable=False, default=0)
     created_at = db.Column(db.DateTime(), default=datetime.utcnow, nullable=False)
 
-    parent_id = db.Column(db.Integer, ForeignKey('document.id'))
+    parent_id = db.Column(db.Integer, ForeignKey('document.id'), index=True)
     parent = db.relationship('Document', remote_side=id, backref='sub_documents')
 
     def __repr__(self) -> str:
         return json.dumps(dict(self))
+
+    def get_icon(self):
+        return "" if not self.icon else self.icon.decode()
 
     @classmethod
     def find_all_by_parent_id(cls, parent_id=None) -> List['Document']:

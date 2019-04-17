@@ -11,13 +11,15 @@ from bot.models.user import Role, User
 from bot.services.decorators import push_app_context
 
 
-def _get_docs_list_response(subdocs: List[Document], text="Content", no_subdocs_text="No content", debug=False) -> BotResponse:
-    text = text if subdocs else no_subdocs_text
+def _get_docs_list_response(docs: List[Document], text="Content", no_docs_text="No content", parent: Document = None, debug=False) -> BotResponse:
+    text = text if docs else no_docs_text
     keyboard = InlineKeyboardMarkup()
 
-    for doc in subdocs:
-        icon = "" if not doc.icon else doc.icon.decode()
-        title = f"{icon} {doc.title}"
+    for doc in docs:
+        title = f"{doc.get_icon()} {doc.title: <100}..."
+        # if parent:
+        #     title += f"{parent.get_icon()} {parent.title}\n"
+
         if debug:
             title += f"{{id: {doc.id} }}"
         button = InlineKeyboardButton(text=title, callback_data=f"{doc.id}")

@@ -1,3 +1,5 @@
+from time import sleep
+
 import click
 import telebot
 from flask.cli import with_appcontext
@@ -22,8 +24,12 @@ stateMachine = StateMachine()
 @click.command("start_bot")
 @with_appcontext
 def start_bot():
-    with app.app_context():
-        bot.polling(none_stop=True)
+    try:
+        with app.app_context():
+            bot.polling(none_stop=True)
+    except Exception as e:
+        app.logger.exception(e)
+        sleep(1)
 
 
 @bot.message_handler(commands=['help'])
@@ -90,17 +96,17 @@ def activate(message: Message):
                                                     role=Role.USER,
                                                     username=message.from_user.username
                                                     )
-    if user.is_active:
-        bot.send_message(message.chat.id, "Already activated")
-        return
-
-    user.is_active=True
-    db.session.add(user)
-    db.session.commit()
-
     keyboard = ReplyKeyboardMarkup(one_time_keyboard=True)
     reg_button = KeyboardButton(text="Share your phone number", request_contact=True)
     keyboard.add(reg_button)
+
+    if user.is_active:
+        bot.send_message(message.chat.id, "Already activated", reply_markup=keyboard)
+        return
+
+    user.is_active = True
+    db.session.add(user)
+    db.session.commit()
 
     bot.send_message(message.chat.id, "Successfully activated", reply_markup=keyboard)
 
@@ -156,7 +162,7 @@ def contact_handler(message: Message, user: User):
 @push_app_context
 def docs_callback_dispatcher(c: CallbackQuery):
     doc = Document.find_by_id(int(c.data))
-    response = _get_docs_list_response(doc.sub_documents, text=doc.content, no_subdocs_text=doc.content)
+    response = _get_docs_list_response(doc.sub_documents, text=doc.content, no_docs_text=doc.content, parent=doc)
 
     bot.send_message(
         c.message.chat.id,

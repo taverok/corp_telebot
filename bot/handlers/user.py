@@ -4,7 +4,7 @@ from bot.extensions import db
 from bot.handlers.core import add_handler, list_routes, route_to_help
 from bot.models import Token
 from bot.models.bot import BotResponse
-from bot.models.user import Role, User
+from bot.models.user import Role, User, get_all_users
 from bot.services.decorators import push_app_context
 
 PREFIX = "/user"
@@ -22,8 +22,7 @@ def help_users(message: Message, user: User, *args, **kwargs) -> BotResponse:
 def list_users(message: Message, user: User, *args, **kwargs) -> BotResponse:
     """ list all active users
     """
-    users = User.query.filter_by(is_active=True).all()
-    response_list = [f'{u.telegram_id} @{u.username} ({u.name} {u.surname}) {u.phone}' for u in users]
+    response_list = [u.to_table_format(with_id=user.is_admin()) for u in get_all_users()]
     return BotResponse('\n'.join(response_list))
 
 
